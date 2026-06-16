@@ -1,0 +1,91 @@
+{
+  "info": {
+    "name": "ecom-user-service",
+    "description": "API de usuarios e autenticacao\n\nBase URL: {{base_url}}",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "ecom-user"
+  },
+  "item": [
+    {
+      "name": "Registrar usuario",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set('user_id', json.id);",
+              "    pm.collectionVariables.set('user_email', json.email);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Joao Silva\",\n  \"email\": \"joao@email.com\",\n  \"password\": \"123456\",\n  \"document\": \"12345678000199\",\n  \"phone\": \"11999999999\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/users/auth/register",
+          "host": ["{{base_url}}"],
+          "path": ["api", "users", "auth", "register"]
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    var json = pm.response.json();",
+              "    pm.collectionVariables.set('auth_token', json.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"joao@email.com\",\n  \"password\": \"123456\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/users/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "users", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Buscar usuario por ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{auth_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/users/{{user_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "users", "{{user_id}}"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3007", "type": "string" },
+    { "key": "user_id", "value": "", "type": "string" },
+    { "key": "user_email", "value": "", "type": "string" },
+    { "key": "auth_token", "value": "", "type": "string" }
+  ]
+}
