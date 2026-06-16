@@ -1,28 +1,22 @@
 package com.ecom.user.controller;
 
+import com.ecom.user.dto.UserResponse;
+import com.ecom.user.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    @PostMapping
-    public String create() {
-        return "create - not implemented";
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping("/{id}")
-    public String getById(@PathVariable String id) {
-        return "getById - not implemented";
-    }
-
-    @PostMapping("/auth/login")
-    public String login() {
-        return "login - not implemented";
-    }
-
-    @PostMapping("/auth/register")
-    public String register() {
-        return "register - not implemented";
+    public UserResponse getById(@PathVariable String id) {
+        return userService.findById(id);
     }
 }
