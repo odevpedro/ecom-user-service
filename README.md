@@ -40,20 +40,29 @@ Faz parte de um ecossistema **polyglot** de microserviços (Java/Spring Boot, Py
 src/main/java/com/ecom/user/
 ├── UserApplication.java                     # @SpringBootApplication
 ├── controller/
-│   ├── AuthController.java                  # POST register, POST login
+│   ├── AuthController.java                  # POST register, login, refresh, verify-email, resend-verification, forgot-password, reset-password
 │   ├── UserController.java                  # GET /api/users/{id}
 │   └── HealthController.java                # /health, /live, /ready
 ├── service/
 │   ├── UserService.java                     # CRUD de usuários
 │   ├── AuthService.java                     # Lógica de autenticação
-│   └── JwtService.java                      # Geração/validação de tokens
+│   ├── JwtService.java                      # Geração/validação de tokens
+│   ├── RefreshTokenService.java             # Refresh token com rotação
+│   ├── EmailVerificationService.java        # Verificação de email (scaffold)
+│   └── PasswordResetService.java            # Recuperação de senha (scaffold)
 ├── model/
 │   ├── User.java                            # JPA Entity
-│   └── Address.java                         # JPA Entity
+│   ├── Address.java                         # JPA Entity
+│   ├── RefreshToken.java                    # JPA Entity — refresh tokens
+│   ├── EmailVerification.java               # JPA Entity — verificação de email
+│   └── PasswordReset.java                   # JPA Entity — reset de senha
 ├── repository/
 │   ├── UserRepository.java                  # Spring Data JPA
-│   └── AddressRepository.java               # Spring Data JPA
-├── dto/                                     # CreateUserRequest, LoginRequest, etc.
+│   ├── AddressRepository.java               # Spring Data JPA
+│   ├── RefreshTokenRepository.java          # Spring Data JPA
+│   ├── EmailVerificationRepository.java     # Spring Data JPA
+│   └── PasswordResetRepository.java         # Spring Data JPA
+├── dto/                                     # CreateUserRequest, LoginRequest, RefreshTokenRequest, etc.
 ├── config/
 │   ├── SecurityConfig.java                  # Filter chain + CORS
 │   ├── JwtAuthFilter.java                   # Bearer token filter
@@ -102,24 +111,30 @@ A API estará disponível em `http://localhost:3007`.
 ./mvnw test
 ```
 
-**5 cenários:**
+**11 cenários:**
 | Suite                        | Arquivo                              | Cenários |
 |------------------------------|--------------------------------------|----------|
 | Integração (AuthController)  | `AuthControllerTest.java`            | 2        |
 | Unitários (JwtService)       | `JwtServiceTest.java`                | 3        |
+| Unitários (RefreshToken)     | `RefreshTokenServiceTest.java`       | 6        |
 
 ---
 
 ## API — Endpoints
 
-| Método | Rota                         | Auth     | Descrição                    |
-|--------|------------------------------|----------|------------------------------|
-| GET    | `/health`                    | Não      | Health check                 |
-| GET    | `/live`                      | Não      | Liveness probe               |
-| GET    | `/ready`                     | Não      | Readiness probe              |
-| POST   | `/api/users/auth/register`   | Não      | Registro de usuário (201)    |
-| POST   | `/api/users/auth/login`      | Não      | Login, retorna JWT           |
-| GET    | `/api/users/{id}`            | JWT      | Dados do usuário             |
+| Método | Rota                               | Auth     | Descrição                                |
+|--------|------------------------------------|----------|------------------------------------------|
+| GET    | `/health`                          | Não      | Health check                             |
+| GET    | `/live`                            | Não      | Liveness probe                           |
+| GET    | `/ready`                           | Não      | Readiness probe                          |
+| POST   | `/api/users/auth/register`         | Não      | Registro de usuário (201)                |
+| POST   | `/api/users/auth/login`            | Não      | Login, retorna JWT + refresh token       |
+| POST   | `/api/users/auth/refresh`          | Não      | Renova access token via refresh token    |
+| POST   | `/api/users/auth/verify-email`     | Não      | Verifica email com token                 |
+| POST   | `/api/users/auth/resend-verification` | Não   | Reenvia token de verificação (stub)      |
+| POST   | `/api/users/auth/forgot-password`  | Não      | Solicita reset de senha (stub)           |
+| POST   | `/api/users/auth/reset-password`   | Não      | Executa reset de senha com token         |
+| GET    | `/api/users/{id}`                  | JWT      | Dados do usuário                         |
 
 > Documentação interativa: `http://localhost:3007/swagger-ui.html` (Springdoc OpenAPI)
 
@@ -143,9 +158,9 @@ A API estará disponível em `http://localhost:3007`.
 [x] Proteção de rotas com Spring Security
 [x] JPA + PostgreSQL com ddl-auto=update
 [x] Health checks + Request ID + erro padronizado
-[ ] Refresh token
-[ ] Verificação de e-mail
-[ ] Recuperação de senha
+[x] Refresh token com rotação (7 dias de validade)
+[x] Verificação de e-mail — estrutura e endpoints
+[x] Recuperação de senha — estrutura e endpoints
 ```
 
 ---

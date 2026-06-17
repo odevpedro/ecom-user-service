@@ -32,8 +32,6 @@ Microservico de gerenciamento de usuarios do ecosistema ecom. Responsavel por ca
 
 ## Em Andamento
 
-> Features atualmente sendo desenvolvidas. Idealmente, maximo de 2–3 itens simultaneos.
-
 _Nenhum item em andamento no momento._
 
 ---
@@ -44,10 +42,8 @@ _Nenhum item em andamento no momento._
 
 | Prioridade | Item | Estimativa |
 |------------|------|------------|
-| `P1` | Refresh token — renovacao silenciosa sem reautenticacao | `M` |
-| `P1` | Verificacao de email — envio de codigo e confirmacao | `M` |
-| `P2` | Recuperacao de senha — fluxo de reset por email | `M` |
 | `P3` | CRUD de enderecos — endpoints para criar, listar, atualizar e remover enderecos | `S` |
+| `P3` | Envio real de email para verificacao e recuperacao de senha | `M` |
 | `P3` | Paginacao na consulta de usuarios | `XS` |
 
 ---
@@ -66,6 +62,10 @@ _Nenhum item em andamento no momento._
 | Consulta protegida de usuario por ID | 2026-06-16 | `S` | `UserController.getById()` |
 | Request ID tracing (filtro X-Request-ID) | 2026-06-16 | `XS` | `RequestIdFilter` |
 | Testes: 2 integracao AuthController + 3 unitarios JwtService | 2026-06-16 | `S` | `AuthControllerTest`, `JwtServiceTest` |
+| Refresh token com rotacao (7 dias) + POST /refresh | 2026-06-16 | `M` | `RefreshTokenService`, `RefreshToken`, `AuthController.refresh()` |
+| Verificacao de email — estrutura (entidade + service + endpoints) | 2026-06-16 | `M` | `EmailVerification`, `EmailVerificationService`, `AuthController.verifyEmail()` |
+| Recuperacao de senha — estrutura (entidade + service + endpoints) | 2026-06-16 | `M` | `PasswordReset`, `PasswordResetService`, `AuthController.forgotPassword()` |
+| Testes unitarios RefreshTokenService (6 cenarios) | 2026-06-16 | `S` | `RefreshTokenServiceTest` |
 
 ---
 
@@ -90,3 +90,4 @@ _Nenhuma decisao pendente no momento._
 | Versao | Data | Principais entregas |
 |--------|------|---------------------|
 | `1.0.0` | 2026-06-16 | Cadastro BCrypt, JWT auth, JPA + PostgreSQL, health checks, consulta protegida |
+| `1.1.0` | 2026-06-16 | Refresh token com rotacao, verificacao de email (scaffold), recuperacao de senha (scaffold) |

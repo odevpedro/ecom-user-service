@@ -1,21 +1,18 @@
 package com.ecom.user.dto;
 
-public class LoginResponse {
+public class RefreshTokenResponse {
 
     private String token;
     private String refreshToken;
     private long expiresIn;
-    private UserResponse user;
 
-    public LoginResponse(String token, long expiresIn, String refreshToken, UserResponse user) {
+    public RefreshTokenResponse(String token, String refreshToken, long expiresIn) {
         this.token = token;
-        this.expiresIn = expiresIn;
         this.refreshToken = refreshToken;
-        this.user = user;
+        this.expiresIn = expiresIn;
     }
 
     public String getToken() { return token; }
     public String getRefreshToken() { return refreshToken; }
     public long getExpiresIn() { return expiresIn; }
-    public UserResponse getUser() { return user; }
 }

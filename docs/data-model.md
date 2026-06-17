@@ -18,7 +18,7 @@
 
 ## Visao Geral
 
-Duas entidades principais: `User` (usuarios do sistema) e `Address` (enderecos vinculados a cada usuario). O nucleo do dominio e o cadastro de usuarios com autenticacao via JWT.
+Cinco entidades principais: `User` (usuarios do sistema), `Address` (enderecos vinculados a cada usuario), `RefreshToken` (tokens de renovacao de sessao), `EmailVerification` (verificacao de email) e `PasswordReset` (recuperacao de senha). O nucleo do dominio e o cadastro de usuarios com autenticacao via JWT e fluxos de seguranca.
 
 **Banco de dados:** PostgreSQL 15
 **ORM / acesso:** Hibernate via Spring Data JPA
@@ -55,7 +55,40 @@ erDiagram
         timestamptz created_at
     }
 
+    REFRESH_TOKEN {
+        uuid id PK
+        uuid user_id FK
+        varchar token UK
+        timestamptz expires_at
+        boolean revoked
+        timestamptz created_at
+    }
+
+    EMAIL_VERIFICATION {
+        uuid id PK
+        uuid user_id FK
+        varchar token UK
+        timestamptz expires_at
+        timestamptz verified_at
+        timestamptz created_at
+    }
+
+    PASSWORD_RESET {
+        uuid id PK
+        uuid user_id FK
+        varchar token UK
+        timestamptz expires_at
+        timestamptz used_at
+        timestamptz created_at
+    }
+
     USER ||--o{ ADDRESS : "tem muitos"
+    USER ||--o{ REFRESH_TOKEN : "tem muitos"
+    USER ||--o{ EMAIL_VERIFICATION : "tem muitos"
+    USER ||--o{ PASSWORD_RESET : "tem muitos"
+    USER ||--o{ REFRESH_TOKEN : "tem muitos"
+    USER ||--o{ EMAIL_VERIFICATION : "tem muitos"
+    USER ||--o{ PASSWORD_RESET : "tem muitos"
 ```
 
 ---
@@ -121,6 +154,81 @@ erDiagram
 
 ---
 
+### RefreshToken
+
+> Token de longa duracao (7 dias) usado para renovar o access token JWT sem reautenticacao. Implementa rotacao: a cada uso o token antigo e revogado e um novo e emitido.
+
+**Tabela:** `refresh_tokens`
+**Servico responsavel:** ecom-user-service
+
+| Campo | Tipo SQL | Nullable | Default | Descricao |
+|-------|----------|----------|---------|-----------|
+| `id` | UUID | Nao | uuid_generate_v4() | Identificador unico do token |
+| `user_id` | VARCHAR(36) | Nao | — | FK para o usuario dono do token |
+| `token` | VARCHAR(36) | Nao | — | UUID do refresh token (unico) |
+| `expires_at` | TIMESTAMPTZ | Nao | — | Data de expiracao (now + 7 days) |
+| `revoked` | BOOLEAN | Nao | false | Indica se o token foi revogado (rotacao) |
+| `created_at` | TIMESTAMP | Nao | NOW() | Data de criacao do registro |
+
+**Constraints:**
+- `UNIQUE(token)` — cada token deve ser unico para garantir a seguranca da rotacao
+- `FOREIGN KEY (user_id) REFERENCES users(id)`
+
+**Relacionamentos:**
+- Muitos `RefreshToken` pertencem a um `User` via `refresh_tokens.user_id`
+
+---
+
+### EmailVerification
+
+> Token de verificacao de email com validade de 24h. Permite confirmar que o usuario possui acesso ao email informado no cadastro.
+
+**Tabela:** `email_verifications`
+**Servico responsavel:** ecom-user-service
+
+| Campo | Tipo SQL | Nullable | Default | Descricao |
+|-------|----------|----------|---------|-----------|
+| `id` | UUID | Nao | uuid_generate_v4() | Identificador unico do token |
+| `user_id` | VARCHAR(36) | Nao | — | FK para o usuario |
+| `token` | VARCHAR(36) | Nao | — | UUID do token de verificacao (unico) |
+| `expires_at` | TIMESTAMP | Nao | — | Data de expiracao (now + 24h) |
+| `verified_at` | TIMESTAMP | Sim | NULL | Momento em que o email foi verificado |
+| `created_at` | TIMESTAMP | Nao | NOW() | Data de criacao do registro |
+
+**Constraints:**
+- `UNIQUE(token)` — cada token deve ser unico
+- `FOREIGN KEY (user_id) REFERENCES users(id)`
+
+**Relacionamentos:**
+- Muitos `EmailVerification` pertencem a um `User` via `email_verifications.user_id`
+
+---
+
+### PasswordReset
+
+> Token de recuperacao de senha com validade de 1h. Permite que o usuario redefina sua senha sem estar autenticado.
+
+**Tabela:** `password_resets`
+**Servico responsavel:** ecom-user-service
+
+| Campo | Tipo SQL | Nullable | Default | Descricao |
+|-------|----------|----------|---------|-----------|
+| `id` | UUID | Nao | uuid_generate_v4() | Identificador unico do token |
+| `user_id` | VARCHAR(36) | Nao | — | FK para o usuario |
+| `token` | VARCHAR(36) | Nao | — | UUID do token de reset (unico) |
+| `expires_at` | TIMESTAMP | Nao | — | Data de expiracao (now + 1h) |
+| `used_at` | TIMESTAMP | Sim | NULL | Momento em que o token foi utilizado |
+| `created_at` | TIMESTAMP | Nao | NOW() | Data de criacao do registro |
+
+**Constraints:**
+- `UNIQUE(token)` — cada token deve ser unico
+- `FOREIGN KEY (user_id) REFERENCES users(id)`
+
+**Relacionamentos:**
+- Muitos `PasswordReset` pertencem a um `User` via `password_resets.user_id`
+
+---
+
 ## Indices e Performance
 
 | Indice | Tabela | Campos | Tipo | Motivo |
@@ -129,6 +237,10 @@ erDiagram
 | `idx_users_id` | `users` | `id` | PRIMARY KEY BTREE | Consulta de usuario por ID |
 | `idx_addresses_user_id` | `addresses` | `user_id` | BTREE | Consulta de enderecos por usuario |
 | `idx_addresses_default` | `addresses` | `user_id, is_default` WHERE `is_default = TRUE` | Partial BTREE | Busca rapida do endereco padrao |
+| `idx_refresh_tokens_token` | `refresh_tokens` | `token` | UNIQUE BTREE | Consulta de refresh token por string |
+| `idx_refresh_tokens_user_id` | `refresh_tokens` | `user_id` | BTREE | Revogacao em massa de tokens por usuario |
+| `idx_email_verifications_token` | `email_verifications` | `token` | UNIQUE BTREE | Consulta de token de verificacao |
+| `idx_password_resets_token` | `password_resets` | `token` | UNIQUE BTREE | Consulta de token de reset |
 
 ---
 
